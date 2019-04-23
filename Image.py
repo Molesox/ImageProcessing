@@ -1,19 +1,25 @@
+import datetime
+
 from utilities import *
 
 
 class Image:
 
-    def __init__(self, name, dirname):
+    def __init__(self, name, dirname, size=(3, 4)):
+
         self.name = name
         self.dirname = dirname
 
-        self.s_extrema = 8
         self.box = (500, 10, 3700, 2200)
         self.im = cv2.imread(os.path.join(dirname, self.name))
 
         self.im_shape = np.shape(self.im)
         self.width = self.im_shape[1]
         self.height = self.im_shape[0]
+        # self.height += self.adjustment()
+
+        self.irl_width = size[1]
+        self.irl_height = size[0]
 
         self.border = self.adjustment()
 
@@ -28,20 +34,44 @@ class Image:
         self.topmost = tuple(self.contour[self.contour[:, :, 1].argmin()][0])
         self.bottommost = tuple(self.contour[self.contour[:, :, 1].argmax()][0])
 
+        self.c_surface = cv2.contourArea(self.contour)
+        self.c_perim = cv2.arcLength(self.contour, True)
+
         self.extrema = [self.topmost, self.rightmost,
                         self.bottommost, self.leftmost]
         self.extrema_color = self.get_extrema_color()
+        self.s_extrema = 8
 
     def info(self):
-        print("Image :{}\n".format(self.name) +
-              "location :{}\n".format(self.dirname) +
-              " -height : {}\n".format(self.height) +
-              " -width : {}\n".format(self.width))
-        print("His contour extrema are:\n"
-              " -leftmost {}\n".format(self.leftmost) +
-              " -rightmost {}\n".format(self.rightmost) +
-              " -topmost {}\n".format(self.topmost) +
-              " -bottomost {}".format(self.bottommost))
+        to_add = self.adjustment()
+        self.leftmost = (self.leftmost[0], self.leftmost[1] + to_add)
+        self.rightmost = (self.rightmost[0], self.rightmost[1] + to_add)
+        self.topmost = (self.topmost[0], self.topmost[1] + to_add)
+        self.bottommost = (self.bottommost[0], self.bottommost[1] + to_add)
+        height = self.height + to_add
+        f = open(os.path.join(self.dirname, "INFO_" + self.name.replace('.jpg', '') + ".txt"), 'w')
+        f.write("Meta données autogénérée {}\n".format(datetime.datetime.now()))
+        f.write("Image : {}\n".format(self.name) +
+                "location : {}\n".format(self.dirname) +
+                " -height : {}, ".format(height) + "{}m\n".format(self.irl_height) +
+                " -width : {}, ".format(self.width) + "{}m\n".format(self.irl_width))
+        f.write("His contour extrema are:\n"
+
+                " -leftmost {},".format(self.leftmost) +
+                " {}cm\n".format(self.to_centimeters(self.leftmost[0], self.leftmost[1])) +
+
+                " -rightmost {},".format(self.rightmost) +
+                " {}cm\n".format(self.to_centimeters(self.rightmost[0], self.rightmost[1])) +
+
+                " -topmost {},".format(self.topmost) +
+                " {}cm\n".format(self.to_centimeters(self.topmost[0], self.topmost[1])) +
+
+                " -bottomost {},".format(self.bottommost) +
+                " {}cm\n".format(self.to_centimeters(self.bottommost[0], self.bottommost[1])) +
+
+                " -area = {}\n".format(self.c_surface) +
+                " -perimeter = {}\n".format(self.c_perim))
+        f.close()
 
     def get_extrema_color(self):
         if self.contour_color == (0, 0, 255):
@@ -63,6 +93,11 @@ class Image:
             return int((0.2 * self.height) / 2.5)
         else:
             return int((0.5 * self.height) / 2.5)
+
+    def to_centimeters(self, x, y):
+        temp_x = x * (self.irl_height / self.height) * 100
+        temp_y = y * (self.irl_width / self.width) * 100
+        return temp_x, temp_y
 
     def get_iter(self):
         if self.name.endswith('1.jpg'):
@@ -150,7 +185,6 @@ class Image:
 
 
 def print_superposition(images, extrema):
-
     render = create_image(images[0].width, images[0].height)
     name = 'S_'
     for im in images:

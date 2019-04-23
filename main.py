@@ -7,6 +7,7 @@ verrou1 = RLock()
 verrou2 = RLock()
 verrou3 = RLock()
 verrou4 = RLock()
+verrou5 = RLock()
 
 
 class ImGenerator(Thread):
@@ -28,6 +29,8 @@ class ImGenerator(Thread):
             self.img.print_image_w()
         with verrou4:
             self.img.print_image_w_e()
+        with verrou5:
+            self.img.info()
 
 
 # noinspection SpellCheckingInspection
@@ -36,6 +39,15 @@ def main():
     start_time = time.time()
     nbfiles = nb_files()
     print("Total number of files to analyse: {}".format(nbfiles))
+    i = 0
+    for dirname, dirnames, filenames in os.walk('photos'):
+        if i == 0:
+            i += 1
+            continue
+        l_file = []
+        for filename in filenames:
+            l_file.append(Image(filename, dirname))
+        print_superposition(l_file, False)
 
     threads_im = []
 
@@ -46,13 +58,15 @@ def main():
             continue
 
         for filename in filenames:
-            threads_im.append(ImGenerator(filename, dirname))
+            if filename[0] != 'S':
+                threads_im.append(ImGenerator(filename, dirname))
 
     for thread in threads_im:
         thread.start()
 
     for thread in threads_im:
         thread.join()
+
     newfiles = nb_files() - nbfiles
     print("There are {} new files created in : ".format(newfiles) +
           "%s seconds." % (time.time() - start_time))
@@ -62,11 +76,11 @@ def main():
 def clean():
     for dirname, dirnames, filenames in os.walk('photos'):
         for filename in filenames:
-            if filename.startswith('C') or\
-                    filename.startswith('E') or\
-                    filename.startswith('W') or\
-                    filename.startswith('S'):
-
+            if filename.startswith('C') or \
+                    filename.startswith('E') or \
+                    filename.startswith('W') or \
+                    filename.startswith('S') or \
+                    filename.startswith('INFO'):
                 os.remove(os.path.join(dirname, filename))
 
 
