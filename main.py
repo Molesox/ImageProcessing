@@ -39,33 +39,44 @@ def main():
     start_time = time.time()
     nbfiles = nb_files()
     print("Total number of files to analyse: {}".format(nbfiles))
-    i = 0
+
+    a = 0
     for dirname, dirnames, filenames in os.walk('photos'):
-        if i == 0:
-            i += 1
+        if a == 0:
+            a += 1
             continue
         l_file = []
         for filename in filenames:
             l_file.append(Image(filename, dirname))
         print_superposition(l_file, False)
 
+    dirnam = []
     threads_im = []
+    threads_im2 = []
 
-    i = 0
-    for dirname, dirnames, filenames in os.walk('photos'):
-        if i == 0:
-            i += 1
-            continue
+    tab_thread(dirnam)
 
-        for filename in filenames:
-            if filename[0] != 'S':
-                threads_im.append(ImGenerator(filename, dirname))
+    for i in range(0, 16):
+        threads_im.append(ImGenerator(dirnam[i][0], dirnam[i][1]))
 
     for thread in threads_im:
         thread.start()
 
     for thread in threads_im:
         thread.join()
+
+    threads_im.clear()
+
+    for i in range(16, 34):
+        threads_im2.append(ImGenerator(dirnam[i][0], dirnam[i][1]))
+
+    for thread in threads_im2:
+        thread.start()
+
+    for thread in threads_im2:
+        thread.join()
+
+    threads_im2.clear()
 
     newfiles = nb_files() - nbfiles
     print("There are {} new files created in : ".format(newfiles) +
@@ -82,6 +93,18 @@ def clean():
                     filename.startswith('S') or \
                     filename.startswith('INFO'):
                 os.remove(os.path.join(dirname, filename))
+
+
+def tab_thread(filenames_dir):
+    i = 0
+    for dirname, dirnames, filenames in os.walk('photos'):
+        if i == 0:
+            i += 1
+            continue
+
+        for filename in filenames:
+            if filename[0] != 'S':
+                filenames_dir.append((filename, dirname))
 
 
 if __name__ == '__main__':

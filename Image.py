@@ -10,7 +10,7 @@ class Image:
         self.name = name
         self.dirname = dirname
 
-        self.box = (500, 10, 3700, 2200)
+        self.box = (500, 10, 4000, 2200)
         self.im = cv2.imread(os.path.join(dirname, self.name))
 
         self.im_shape = np.shape(self.im)
@@ -48,12 +48,12 @@ class Image:
         self.rightmost = (self.rightmost[0], self.rightmost[1] + to_add)
         self.topmost = (self.topmost[0], self.topmost[1] + to_add)
         self.bottommost = (self.bottommost[0], self.bottommost[1] + to_add)
-        height = self.height + to_add
+        self.height = self.height + to_add
         f = open(os.path.join(self.dirname, "INFO_" + self.name.replace('.jpg', '') + ".txt"), 'w')
         f.write("Meta données autogénérée {}\n".format(datetime.datetime.now()))
         f.write("Image : {}\n".format(self.name) +
                 "location : {}\n".format(self.dirname) +
-                " -height : {}, ".format(height) + "{}m\n".format(self.irl_height) +
+                " -height : {}, ".format(self.height) + "{}m\n".format(self.irl_height) +
                 " -width : {}, ".format(self.width) + "{}m\n".format(self.irl_width))
         f.write("His contour extrema are:\n"
 
@@ -69,7 +69,7 @@ class Image:
                 " -bottomost {},".format(self.bottommost) +
                 " {}cm\n".format(self.to_centimeters(self.bottommost[0], self.bottommost[1])) +
 
-                " -area = {}\n".format(self.c_surface) +
+                " -area = {}m^2\n".format((self.c_surface * 0.8467 * 0.8467) / 1000000) +
                 " -perimeter = {}\n".format(self.c_perim))
         f.close()
 
